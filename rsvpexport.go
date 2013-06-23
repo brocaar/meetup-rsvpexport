@@ -28,14 +28,23 @@ type Member struct {
 	MemberId int    `json:"member_id"`
 }
 
+type Group struct {
+	Id int `json:"id"`
+}
+
 type Result struct {
 	Response string  `json:"response"`
 	Member   *Member `json:"member"`
 	Guests   int     `json:"guests"`
+	Group    *Group  `json:"group"`
 }
 
 type Results struct {
 	Results []*Result `json:"results"`
+}
+
+type Profile struct {
+	Bio string `json:"bio"`
 }
 
 func (results *Results) AppendResults(extraResults []*Result) {
@@ -57,10 +66,11 @@ func main() {
 
 	rsvps := getRSVPS()
 
-	csvWriter.Write([]string{"Member name", "RSVP status", "Guests"})
+	csvWriter.Write([]string{"Member name", "Profile bio", "RSVP status", "Guests"})
 
 	for _, result := range rsvps.Results {
-		csvWriter.Write([]string{result.Member.Name, result.Response, strconv.Itoa(result.Guests)})
+		profile := getProfile(result.Group.Id, result.Member.MemberId)
+		csvWriter.Write([]string{result.Member.Name, profile.Bio, result.Response, strconv.Itoa(result.Guests)})
 	}
 
 }
@@ -111,4 +121,29 @@ func getRSVPS() *Results {
 	}
 
 	return output
+}
+
+func getProfile(groupId, memberId int) *Profile {
+	v := url.Values{}
+	v.Set("sign", "true")
+	v.Set("key", apiKey)
+	requestUrl := fmt.Sprintf("https://api.meetup.com/2/profile/%d/%d?%s", groupId, memberId, v.Encode())
+
+	log.Printf("GET: %s", requestUrl)
+
+	resp, err := http.Get(requestUrl)
+	if err != nil {
+		log.Panic(err)
+	} else if resp.StatusCode != 200 {
+		log.Fatalf("Request failed: %d - %s\n", resp.StatusCode, resp.Status)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var profile Profile
+	if err := json.Unmarshal(body, &profile); err != nil {
+		log.Fatal(err)
+	}
+
+	return &profile
 }
