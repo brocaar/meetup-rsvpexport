@@ -38,3 +38,7 @@ See: http://www.meetup.com/meetup_api/
     Usage of ./meetup-rsvpexport:
       -apikey="": your meetup API key
       -eventid="": the event-id of the meetup
+
+Example::
+
+    $ meetup-rsvpexport -apikey yourapikey -eventid 12345 > attendees.csv
