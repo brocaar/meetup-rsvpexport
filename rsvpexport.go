@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 )
 
 type MetaFields struct {
@@ -51,6 +52,8 @@ func (results *Results) AppendResults(extraResults []*Result) {
 	results.Results = append(results.Results, extraResults...)
 }
 
+const sleepDuration = time.Second
+
 var eventId string
 var apiKey string
 
@@ -71,6 +74,7 @@ func main() {
 	for _, result := range rsvps.Results {
 		profile := getProfile(result.Group.Id, result.Member.MemberId)
 		csvWriter.Write([]string{result.Member.Name, profile.Bio, result.Response, strconv.Itoa(result.Guests)})
+		time.Sleep(sleepDuration)
 	}
 
 }
@@ -118,6 +122,8 @@ func getRSVPS() *Results {
 		} else {
 			break
 		}
+		
+		time.Sleep(sleepDuration)
 	}
 
 	return output
